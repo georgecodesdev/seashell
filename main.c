@@ -11,12 +11,12 @@
  *quit program on ^D
  */
 
-int main(int argc, char *argv){
+int main(){
 	bool run = true;
 	char *userInput;
+	char *compareMe;
 	int bufSize = 100;
-		
-	char *checkMe = "ls";
+
 	userInput = (char *)malloc(bufSize * sizeof(char));
 	
 	while (run){
@@ -26,14 +26,21 @@ int main(int argc, char *argv){
 			printf("\n");
 			break;
 		}
-
+		
+		/* Allocating the correct amount of mem to the compare array */
 		int len = strlen(userInput) - 2; //for some reason the strlen doesnt actually get the correct num chars -- idk why
-		printf("\n\nWhat does this do %c\n\n",userInput[len]);
+		compareMe = (char*)malloc(len * sizeof(char));
 		
-		if (strcmp(userInput, checkMe) == 0){
-			printf("You just entered: %s",userInput);
-			printf("\n");
+		/* IDK if there is a better way of doing this, because it looks not efficient */
+		for (int i = 0; i <= len; i++){
+			compareMe[i] = userInput[i];
 		}
-		
+		/* comparing what the user typed vs what we are looking for */
+		if (strcmp(compareMe, "ls") == 0){
+			printf("You just entered: %s",userInput);
+		}
+
+		free(compareMe);	
+		printf("\n");
 	}
 }
