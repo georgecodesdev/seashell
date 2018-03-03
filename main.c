@@ -6,9 +6,7 @@
 
 /* TO implement in the 'basic version'
  * pwd
- * echo
  * sleep
- *quit program on ^D
  */
 
 /* Function that handles the functionality of the 'ls' command */
@@ -28,13 +26,20 @@ void ls(){
     closedir(dirStream);
   }	
 }
+/* Function that handles the 'echo' command */
+void echo(char *myMessage){
+	for (int i = 4; i < strlen(myMessage); i++){
+		printf("%c",myMessage[i]);
+	}
+	printf("\n");
+}
 
 
 int main(){
 	bool run = true;
 	char *userInput;
 	char *compareMe;
-	int bufSize = 100;
+	int bufSize = 100, i = 0;
 
 	userInput = (char *)malloc(bufSize * sizeof(char));
 	
@@ -51,7 +56,7 @@ int main(){
 		compareMe = (char*)malloc(len * sizeof(char));
 		
 		/* IDK if there is a better way of doing this, because it looks not efficient */
-		for (int i = 0; i <= len; i++){
+		for (i = 0; i <= len; i++){
 			compareMe[i] = userInput[i];
 		}
 		
@@ -63,8 +68,41 @@ int main(){
 		else if (len == 2){ //if the user inputted 'pwd'
 
 		}
-		else if (len > 2){ //if the user did not
-			printf("This is what you entered: %s\n",compareMe);
+		else if (len > 2){ //we know at this point it could either be echo or sleep (because they both contain stuff after
+			/* Simple compare arrays  */
+			char *echoCompare = "echo";
+			char *sleepCompare = "sleep";
+			bool isSleep = true, isEcho = true;
+
+			/* Going to check to see if we are looking at an 'echo' command */
+			for (i = 0; i < 4; i++){
+				if (compareMe[i] != echoCompare[i]){
+					printf("\n\nWe know that at this %c does not match with %c\n\n",compareMe[i],echoCompare[i]);
+					isEcho = false;
+					break;	
+				}	
+			}
+				
+			/* If we know the user didnt want to use the echo command, we gotta check for the other possibility "sleep" */
+			if (!isEcho){
+				for (i = 0; i < 5; i++){
+					if(compareMe[i] != sleepCompare[i]){
+						isSleep = false;
+					}
+				}
+			}
+			else { // we need to rememeber to reset the isSleep
+				isSleep = false;
+				echo(compareMe);
+			}
+
+			if (isSleep){
+				printf("Just wanted to make sure I wasnt a sleep\n");
+			}
+
+			/* De-allocating the mem for the compare arrays  -- since we dont need them anymore */
+	//		free(echoCompare);
+	//		free(sleepCompare);
 		}
 		free(compareMe);	
 	}
