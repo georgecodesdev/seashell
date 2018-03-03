@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
+#include <unistd.h> 
 
 /* TO implement in the 'basic version'
  * pwd
@@ -34,6 +35,19 @@ void echo(char *myMessage){
 	printf("\n");
 }
 
+void sleepMe(char *findNumber){
+	char *tempNum = (char*)malloc(strlen(findNumber) * sizeof(char));
+	double timeToSleep;
+
+	int i = 6; // the index of the first decimal that we want	
+	for (int indexOfNum = 0; indexOfNum < strlen(findNumber);  indexOfNum++){
+		tempNum[indexOfNum] = findNumber[i];
+		i++;
+	}
+
+	sscanf(tempNum, "%lf",&timeToSleep);	
+	sleep(timeToSleep);
+}
 
 int main(){
 	bool run = true;
@@ -77,7 +91,6 @@ int main(){
 			/* Going to check to see if we are looking at an 'echo' command */
 			for (i = 0; i < 4; i++){
 				if (compareMe[i] != echoCompare[i]){
-					printf("\n\nWe know that at this %c does not match with %c\n\n",compareMe[i],echoCompare[i]);
 					isEcho = false;
 					break;	
 				}	
@@ -97,12 +110,11 @@ int main(){
 			}
 
 			if (isSleep){
-				printf("Just wanted to make sure I wasnt a sleep\n");
+				sleepMe(compareMe);	
 			}
 
 			/* De-allocating the mem for the compare arrays  -- since we dont need them anymore */
-	//		free(echoCompare);
-	//		free(sleepCompare);
+			//TODO need to work on that
 		}
 		free(compareMe);	
 	}
