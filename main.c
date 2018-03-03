@@ -7,7 +7,6 @@
 
 /* TO implement in the 'basic version'
  * pwd
- * sleep
  */
 
 /* Function that handles the functionality of the 'ls' command */
@@ -48,6 +47,16 @@ void sleepMe(char *findNumber){
 	sscanf(tempNum, "%lf",&timeToSleep);	
 	sleep(timeToSleep);
 }
+/* Funciton that handles the 'pwd' command */
+void pwd(){
+	/* Going to hold the actual info for the file path */
+	char temp[1000];
+   
+	/* Grabbing the current filepath -- if we  */
+  	if (getcwd(temp, sizeof(temp)) != NULL){
+       		printf("%s\n", temp);
+   	}
+}
 
 int main(){
 	bool run = true;
@@ -80,7 +89,7 @@ int main(){
 			printf("\n");	
 		}
 		else if (len == 2){ //if the user inputted 'pwd'
-
+			pwd();
 		}
 		else if (len > 2){ //we know at this point it could either be echo or sleep (because they both contain stuff after
 			/* Simple compare arrays  */
