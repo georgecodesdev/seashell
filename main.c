@@ -59,23 +59,21 @@ void pwd(){
 }
 
 int main(){
-	bool run = true;
 	char *userInput;
 	char *compareMe;
 	int bufSize = 100, i = 0;
 
 	userInput = (char *)malloc(bufSize * sizeof(char));
-	
-	while (run){
+
+	while (true){
 		printf("# ");
-	 
-		/* Using the fscanf command to detect if the user entered ^D */
-		if (fscanf(stdin,"%s",compareMe) < 1){
-			printf("\n");
+
+		if (fgets(userInput,bufSize,stdin) == NULL){
+			printf("^D\n");
 			fflush(stdout);
-			break;
+			break;			
 		}
-		
+
 		/* Allocating the correct amount of mem to the compare array */
 		int len = strlen(userInput) - 2; //for some reason the strlen doesnt actually get the correct num chars -- idk why
 		compareMe = (char*)malloc(len * sizeof(char));
