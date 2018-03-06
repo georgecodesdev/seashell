@@ -4,6 +4,12 @@
 #include <string.h>
 #include <dirent.h>
 #include <unistd.h> 
+#include <time.h>
+#include <errno.h>
+#include <signal.h>
+#include <fcntl.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
 
 /* TO implement in the 'basic version'
  * pwd
@@ -58,37 +64,26 @@ void pwd(){
    	}
 }
 
-int main(){
-	char *userInput;
-	char *compareMe;
-	int bufSize = 100, i = 0;
+int runCommand(char *compareMe, int len){
+	pid_t pid = fork();
 
-	userInput = (char *)malloc(bufSize * sizeof(char));
+	pid_t waitPid;
+	pid_t status;
+	
+	int i;
 
-	while (true){
-		printf("# ");
-
-		if (fgets(userInput,bufSize,stdin) == NULL){
-			printf("^D\n");
-			fflush(stdout);
-			break;			
-		}
-
-		/* Allocating the correct amount of mem to the compare array */
-		int len = strlen(userInput) - 2; //for some reason the strlen doesnt actually get the correct num chars -- idk why
-		compareMe = (char*)malloc(len * sizeof(char));
-		
-		/* IDK if there is a better way of doing this, because it looks not efficient */
-		for (i = 0; i <= len; i++){
-			compareMe[i] = userInput[i];
-		}
-		
+	if (pid > 0){
+		do{
+			waitPid = waitpid(pid, &status, WUNTRACED);
+		} while(!WIFEXITED(status) && !WIFSIGNALED(status));
+	}
+	else if (pid == 0){
+		/*TODO work on getting the string to split based on the space, so I can take in different flags  */	
 		/* comparing what the user typed vs what we are looking for */
 		if (strcmp(compareMe, "ls") == 0){ //if the user wants to list the files in the dir
-			ls();
-			printf("\n");	
+			ls();	
 		}
-		else if (len == 2){ //if the user inputted 'pwd'
+		else if (strcmp(compareMe, "pwd") == 0){ //if the user inputted 'pwd'
 			pwd();
 		}
 		else if (len > 2){ //we know at this point it could either be echo or sleep (because they both contain stuff after
@@ -121,10 +116,42 @@ int main(){
 			if (isSleep){
 				sleepMe(compareMe);	
 			}
+		}	 
+		printf("  %d  \n",pid);
+		return 1;
+	}
+	else {
+		perror("Someathing just fucked up.\n");
+	}		
+}
 
-			/* De-allocating the mem for the compare arrays  -- since we dont need them anymore */
-			//TODO need to work on that
+int main(){
+	char *userInput;
+	char *compareMe;
+	int bufSize = 100, i = 0;
+
+	userInput = (char *)malloc(bufSize * sizeof(char));
+
+	while (true){
+		printf("# ");
+
+		if (fgets(userInput,bufSize,stdin) == NULL){
+			printf("^D\n");
+			fflush(stdout);
+			break;			
 		}
+		
+
+		/* Allocating the correct amount of mem to the compare array */
+		int len = strlen(userInput) - 2; //for some reason the strlen doesnt actually get the correct num chars -- idk why
+		compareMe = (char*)malloc(len * sizeof(char));
+		
+		/* IDK if there is a better way of doing this, because it looks not efficient */
+		for (i = 0; i <= len; i++){
+			compareMe[i] = userInput[i];
+		}
+	
+		runCommand(compareMe,len);
 		free(compareMe);	
 	}
 }
