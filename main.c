@@ -68,9 +68,11 @@ int main(){
 	
 	while (run){
 		printf("# ");
-		
-		if (fgets(userInput,bufSize,stdin) == NULL){
+	 
+		/* Using the fscanf command to detect if the user entered ^D */
+		if (fscanf(stdin,"%s",compareMe) < 1){
 			printf("\n");
+			fflush(stdout);
 			break;
 		}
 		
