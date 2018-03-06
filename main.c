@@ -37,7 +37,6 @@ void echo(char *myMessage){
 	for (int i = 4; i < strlen(myMessage); i++){
 		printf("%c",myMessage[i]);
 	}
-	printf("\n");
 }
 
 void sleepMe(char *findNumber){
@@ -60,10 +59,10 @@ void pwd(){
    
 	/* Grabbing the current filepath -- if we  */
   	if (getcwd(temp, sizeof(temp)) != NULL){
-       		printf("%s\n", temp);
+       		printf("%s", temp);
    	}
 }
-
+/* Creates a process to run the command that the original process (soon to be parent) took the user's input for */
 int runCommand(char *compareMe, int len){
 	pid_t pid = fork();
 
@@ -79,6 +78,7 @@ int runCommand(char *compareMe, int len){
 	}
 	else if (pid == 0){
 		/*TODO work on getting the string to split based on the space, so I can take in different flags  */	
+		
 		/* comparing what the user typed vs what we are looking for */
 		if (strcmp(compareMe, "ls") == 0){ //if the user wants to list the files in the dir
 			ls();	
@@ -116,8 +116,7 @@ int runCommand(char *compareMe, int len){
 			if (isSleep){
 				sleepMe(compareMe);	
 			}
-		}	 
-		printf("  %d  \n",pid);
+		}	
 		return 1;
 	}
 	else {
@@ -128,11 +127,22 @@ int runCommand(char *compareMe, int len){
 int main(){
 	char *userInput;
 	char *compareMe;
+	char *dateTime;
 	int bufSize = 100, i = 0;
 
 	userInput = (char *)malloc(bufSize * sizeof(char));
+	dateTime = (char *)malloc(40 * sizeof(char));
+
 
 	while (true){
+  		time_t rawtime;
+  		struct tm * timeinfo;
+
+  		time ( &rawtime );
+  		timeinfo = localtime ( &rawtime );
+  		strftime(dateTime,40,"%d/%m %H:%M", timeinfo);
+
+		printf ("\n%s ", dateTime );	
 		printf("# ");
 
 		if (fgets(userInput,bufSize,stdin) == NULL){
@@ -141,16 +151,18 @@ int main(){
 			break;			
 		}
 		
-
 		/* Allocating the correct amount of mem to the compare array */
 		int len = strlen(userInput) - 2; //for some reason the strlen doesnt actually get the correct num chars -- idk why
 		compareMe = (char*)malloc(len * sizeof(char));
 		
-		/* IDK if there is a better way of doing this, because it looks not efficient */
+		/* TODO need to figure oiut  */
 		for (i = 0; i <= len; i++){
 			compareMe[i] = userInput[i];
 		}
-	
+
+		/* Somehow this is OK -- I have no idea why  */
+		compareMe[i]= '\0';
+
 		runCommand(compareMe,len);
 		free(compareMe);	
 	}
