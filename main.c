@@ -120,7 +120,7 @@ int runCommand(char *compareMe, int len){
 		return 1;
 	}
 	else {
-		perror("Someathing just fucked up.\n");
+		perror("ERROR: Process did not create correctly!!!.\n");
 	}		
 }
 
