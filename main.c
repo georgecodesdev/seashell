@@ -75,6 +75,7 @@ int runCommand(char *compareMe, int len){
 		do{
 			waitPid = waitpid(pid, &status, WUNTRACED);
 		} while(!WIFEXITED(status) && !WIFSIGNALED(status));
+		return 1;
 	}
 	else if (pid == 0){
 		/*TODO work on getting the string to split based on the space, so I can take in different flags  */	
@@ -116,11 +117,14 @@ int runCommand(char *compareMe, int len){
 			if (isSleep){
 				sleepMe(compareMe);	
 			}
-		}	
-		return 1;
+		}
+		exit(0);	
+		return 0;
 	}
 	else {
 		perror("ERROR: Process did not create correctly!!!.\n");
+		exit(0);
+		return -1;
 	}		
 }
 
@@ -130,25 +134,24 @@ int main(){
 	char *dateTime;
 	int bufSize = 100, i = 0;
 
+	time_t rawtime;
+  	struct tm * timeinfo;
+
 	userInput = (char *)malloc(bufSize * sizeof(char));
 	dateTime = (char *)malloc(40 * sizeof(char));
 
-
-	while (true){
-  		time_t rawtime;
-  		struct tm * timeinfo;
-
+	while (true){	
   		time ( &rawtime );
   		timeinfo = localtime ( &rawtime );
   		strftime(dateTime,40,"%d/%m %H:%M", timeinfo);
 
 		printf ("\n%s ", dateTime );	
 		printf("# ");
-
+	
 		if (fgets(userInput,bufSize,stdin) == NULL){
 			printf("^D\n");
 			fflush(stdout);
-			break;			
+			return 0;			
 		}
 		
 		/* Allocating the correct amount of mem to the compare array */
