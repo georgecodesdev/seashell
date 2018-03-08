@@ -10,6 +10,7 @@
 #include <fcntl.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <setjmp.h>
 
 /* TO implement in the 'basic version'
  * pwd
@@ -17,6 +18,8 @@
 
 
 pid_t pid = 1; 
+sigjmp_buf ctrlc_buf;	
+
 bool runningProcess = false;
 bool bypass = false;
 char *userInput;
@@ -153,18 +156,16 @@ void clearBuffer(){
 }
 /*   */
 void overrideCtrlC(){
-	fseek(stdin,0,SEEK_END);
 
-	signal (SIGINT, overrideCtrlC);
+	signal(SIGINT, overrideCtrlC);
 	
 	if (pid == 0){
 		exit(0);
 	}
 	else {
-		printf("am I getting here");
-		bypass = true;
+		printf("\n");
+		siglongjmp(ctrlc_buf, 1);
 	}	
-	fflush(stdout);
 	
 }
 
@@ -187,6 +188,9 @@ void takeInput(){
 
 	while (true){
 		
+		while (sigsetjmp(ctrlc_buf, 1) != 0 );
+
+
 		printStats();
 		getline(&userInput,&bufSize,stdin);
 		if (feof(stdin)){
@@ -195,21 +199,6 @@ void takeInput(){
 			exit(0);
 		}
 
-		if (bypass){
-			printf(" # ");
-			getline(&userInput,&bufSize,stdin);
-	
-			if (feof(stdin)){
-				fflush(stdout);
-				printf("^D\n");
-				exit(0);
-			}
-			bypass = false;
-
-			printf("I am getting out of this now");
-		}
-	
-		
 		/* Allocating the correct amount of mem to the compare array */
 		int len = strlen(userInput) - 2; //for some reason the strlen doesnt actually get the correct num chars -- idk why
 		if (len > 0){
@@ -224,12 +213,14 @@ void takeInput(){
 			/* Somehow this is OK -- I have no idea why  */
 			compareMe[i]= '\0';
 		
-			/* Somehow this is OK -- I have no idea why  */
 			runningProcess = true;
 			runCommand(compareMe,len);
 			free(compareMe);
+			printf("\n");
+			
+			fflush(stdout);
 		}
-		printf("\n");
+
 	}
 }
 
