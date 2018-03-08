@@ -141,11 +141,11 @@ int main(){
 	dateTime = (char *)malloc(40 * sizeof(char));
 
 	while (true){	
-  		time ( &rawtime );
+		time ( &rawtime );
   		timeinfo = localtime ( &rawtime );
   		strftime(dateTime,40,"%d/%m %H:%M", timeinfo);
 
-		printf ("\n%s ", dateTime );	
+		printf ("[%s]", dateTime );	
 		printf("# ");
 	
 		if (fgets(userInput,bufSize,stdin) == NULL){
@@ -166,8 +166,10 @@ int main(){
 		/* Somehow this is OK -- I have no idea why  */
 		compareMe[i]= '\0';
 
-		runCommand(compareMe,len);
-		free(compareMe);	
+		runCommand(compareMe,len);	
+		free(compareMe);
+
+		printf("\n");	
 	}
 }
 
