@@ -22,7 +22,7 @@ bool bypass = false;
 char *userInput;
 char *compareMe;
 char *dateTime;
-int bufSize = 100, i = 0;
+size_t bufSize = 100;int i = 0;
 
 
 void ls();
@@ -155,27 +155,25 @@ void overrideCtrlC(){
 	signal (SIGINT, overrideCtrlC);
 
 	if (!runningProcess){	
-			free(userInput);
-			free(compareMe);
-			free(dateTime);
 
 			printf("Look I am doing stuff now\n");
-			userInput = (char *)malloc(bufSize * sizeof(char));	
+	
 			bypass = true;
 			
 			printf("This is getting called now?\n");
+	}
+	else {
+		if (pid == 0){
+			exit(0);
 		}
 		else {
-			if (pid == 0){
-				exit(0);
-			}
-			else {
-				printf("is this correctly being called?");
-				if (runningProcess == true){
-					printf("\n");
-				}
+			printf("is this correctly being called?");
+			if (runningProcess == true){
+				printf("\n");
 			}
 		}
+	}
+	
 }
 
 void printStats(){
@@ -196,45 +194,34 @@ void takeInput(){
 	userInput = (char *)malloc(bufSize * sizeof(char));
 
 	while (true){
-		runningProcess = false;
+		printStats();
 		
-		if (!bypass){
-			printf("\nbypass is false\n");
-			printStats();
-			
-			if (fgets(userInput,bufSize,stdin) == NULL && !bypass){	
-					printf("^D\n");
-					fflush(stdout);
-					exit(0);			
-			}
-			else {
-				for (int i = 0; i < 100; i++){
-
-				}
-			}
-			
-			/* Allocating the correct amount of mem to the compare array */
-			int len = strlen(userInput) - 2; //for some reason the strlen doesnt actually get the correct num chars -- idk why
-			compareMe = (char*)malloc(len * sizeof(char));
 		
-			/* TODO need to figure oiut  */
-			for (i = 0; i <= len; i++){
-				compareMe[i] = userInput[i];
-			}
+		getline(&userInput,&bufSize,stdin);
+		printf("%s\n",userInput);
+		
+			
+		/* Allocating the correct amount of mem to the compare array */
+		int len = strlen(userInput) - 2; //for some reason the strlen doesnt actually get the correct num chars -- idk why
+		compareMe = (char*)malloc(len * sizeof(char));
 
-			/* Somehow this is OK -- I have no idea why  */
-			compareMe[i]= '\0';
+		/* TODO need to figure oiut  */
+		for (i = 0; i <= len; i++){
+			compareMe[i] = userInput[i];
+		}
+		compareMe[i] = userInput[i];
 
-			runningProcess = true;
-			runCommand(compareMe,len);
-			free(compareMe);
+		/* Somehow this is OK -- I have no idea why  */
+		compareMe[i]= '\0';
+		
 
+		/* Somehow this is OK -- I have no idea why  */
+		runningProcess = true;
+		runCommand(compareMe,len);
+		free(compareMe);
+		runCommand(compareMe,len);
 			printf("\n");
-		}
-		else {
-			fflush(stdout);
-			bypass = false;
-		}
+		printf("\n");
 	}
 }
 
