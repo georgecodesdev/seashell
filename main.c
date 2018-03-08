@@ -205,26 +205,30 @@ void takeInput(){
 				exit(0);
 			}
 			bypass = false;
+
+			printf("I am getting out of this now");
 		}
-			
+	
+		
 		/* Allocating the correct amount of mem to the compare array */
 		int len = strlen(userInput) - 2; //for some reason the strlen doesnt actually get the correct num chars -- idk why
-		compareMe = (char*)malloc(len * sizeof(char));
+		if (len > 0){
+			compareMe = (char*)malloc(len * sizeof(char));
 
-		/* TODO need to figure oiut  */
-		for (i = 0; i <= len; i++){
+			/* TODO need to figure oiut  */
+			for (i = 0; i <= len; i++){
+				compareMe[i] = userInput[i];
+			}
 			compareMe[i] = userInput[i];
-		}
-		compareMe[i] = userInput[i];
 
-		/* Somehow this is OK -- I have no idea why  */
-		compareMe[i]= '\0';
+			/* Somehow this is OK -- I have no idea why  */
+			compareMe[i]= '\0';
 		
-
-		/* Somehow this is OK -- I have no idea why  */
-		runningProcess = true;
-		runCommand(compareMe,len);
-		free(compareMe);
+			/* Somehow this is OK -- I have no idea why  */
+			runningProcess = true;
+			runCommand(compareMe,len);
+			free(compareMe);
+		}
 		printf("\n");
 	}
 }
