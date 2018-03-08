@@ -147,32 +147,24 @@ int runCommand(char *compareMe, int len){
 		return -1;
 	}		
 }
+void clearBuffer(){
+		char c;
+		while ((c = getchar()) != '\n' && c != EOF) { }
+}
 /*   */
 void overrideCtrlC(){
-	char c;
-	while ((c = getchar()) != '\n' && c != EOF) { }
+	fseek(stdin,0,SEEK_END);
 
 	signal (SIGINT, overrideCtrlC);
-
-	if (!runningProcess){	
-
-			printf("Look I am doing stuff now\n");
 	
-			bypass = true;
-			
-			printf("This is getting called now?\n");
+	if (pid == 0){
+		exit(0);
 	}
 	else {
-		if (pid == 0){
-			exit(0);
-		}
-		else {
-			printf("is this correctly being called?");
-			if (runningProcess == true){
-				printf("\n");
-			}
-		}
-	}
+		printf("am I getting here");
+		bypass = true;
+	}	
+	fflush(stdout);
 	
 }
 
@@ -194,12 +186,26 @@ void takeInput(){
 	userInput = (char *)malloc(bufSize * sizeof(char));
 
 	while (true){
+		
 		printStats();
-		
-		
 		getline(&userInput,&bufSize,stdin);
-		printf("%s\n",userInput);
-		
+		if (feof(stdin)){
+			fflush(stdout);
+			printf("^D\n");
+			exit(0);
+		}
+
+		if (bypass){
+			printf(" # ");
+			getline(&userInput,&bufSize,stdin);
+	
+			if (feof(stdin)){
+				fflush(stdout);
+				printf("^D\n");
+				exit(0);
+			}
+			bypass = false;
+		}
 			
 		/* Allocating the correct amount of mem to the compare array */
 		int len = strlen(userInput) - 2; //for some reason the strlen doesnt actually get the correct num chars -- idk why
@@ -219,14 +225,11 @@ void takeInput(){
 		runningProcess = true;
 		runCommand(compareMe,len);
 		free(compareMe);
-		runCommand(compareMe,len);
-			printf("\n");
 		printf("\n");
 	}
 }
 
 int main(){
-
 	signal(SIGINT, overrideCtrlC);
 	takeInput();
 }
