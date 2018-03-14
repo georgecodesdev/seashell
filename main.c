@@ -87,12 +87,44 @@ void pwd(){
 }
 /* Creates a process to run the command that the original process (soon to be parent) took the user's input for */
 int runCommand(char *compareMe, int len){
-	pid = fork();
+	bool userCd = true;
+	int i;
 
+	/* Checking to see if the user wants to cd before we make the child process */
+	char *cdCompare = "cd";
+	for (int i = 0; i < 2; i++){
+		if (compareMe[i] != cdCompare[i]){
+			userCd = false;
+			break;
+		}	
+	}
+
+	if (userCd){
+		//todo need to figure out why this is not wokring --  probs has 
+		/* For some reason this works, but doing the exact same with the manual copy breaks */
+		char *dirToChangeTo = (char*)malloc(len-2 * sizeof(char));
+
+
+		int startIndex = 0;
+		
+		for (i = 3; i <= len; i++){
+			dirToChangeTo[startIndex] = compareMe[i];
+			startIndex++;
+		}
+
+		dirToChangeTo[len-2] = '\0';
+		
+		if (chdir(dirToChangeTo) != 0){
+			printf("Did this break\n");
+		}
+
+		bypass = true;
+		return 0;
+	}
+
+	pid = fork();
 	pid_t waitPid;
 	pid_t status;
-	
-	int i;
 
 	if (pid > 0){
 		do{
@@ -100,8 +132,7 @@ int runCommand(char *compareMe, int len){
 		} while(!WIFEXITED(status) && !WIFSIGNALED(status));
 		return 1;
 	}
-	else if (pid == 0){
-		/*TODO work on getting the string to split based on the space, so I can take in different flags  */	
+	else if (pid == 0){	
 		
 		/* comparing what the user typed vs what we are looking for */
 		if (strcmp(compareMe, "ls") == 0){ //if the user wants to list the files in the dir
@@ -132,6 +163,8 @@ int runCommand(char *compareMe, int len){
 					}
 				}
 			}
+
+
 			else { // we need to rememeber to reset the isSleep
 				isSleep = false;
 				echo(compareMe);
@@ -150,10 +183,7 @@ int runCommand(char *compareMe, int len){
 		return -1;
 	}		
 }
-void clearBuffer(){
-		char c;
-		while ((c = getchar()) != '\n' && c != EOF) { }
-}
+
 /*   */
 void overrideCtrlC(){
 
@@ -189,10 +219,11 @@ void takeInput(){
 	while (true){
 		
 		while (sigsetjmp(ctrlc_buf, 1) != 0 );
-
+		bypass = false;
 
 		printStats();
 		getline(&userInput,&bufSize,stdin);
+		
 		if (feof(stdin)){
 			fflush(stdout);
 			printf("^D\n");
@@ -216,11 +247,13 @@ void takeInput(){
 			runningProcess = true;
 			runCommand(compareMe,len);
 			free(compareMe);
-			printf("\n");
 			
+			if (!bypass){
+				printf("\n");
+			}
+
 			fflush(stdout);
 		}
-
 	}
 }
 
@@ -228,6 +261,3 @@ int main(){
 	signal(SIGINT, overrideCtrlC);
 	takeInput();
 }
-
-
-
