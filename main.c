@@ -115,7 +115,8 @@ int runCommand(char *compareMe, int len){
 		dirToChangeTo[len-2] = '\0';
 		
 		if (chdir(dirToChangeTo) != 0){
-			printf("Did this break\n");
+			fprintf(stderr,"cd: %s: ",dirToChangeTo);
+			perror("");
 		}
 
 		bypass = true;
