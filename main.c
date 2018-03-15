@@ -112,16 +112,16 @@ int runCommand(char *compareMe, int len){
 		int count = 0;
 		while ((token = strsep(&str, ">"))){
 		       if (count == 1){
-				printf("%s\n",token);
 				filePathForOut = token;
 			}
 		       else {
-				compareMe = token;
-			}
+			       strcpy(compareMe, token);		
+		       }
 		       count++;
 		}
 		free(tofree);
-		printf("%s\n",filePathForOut);
+		printf("the file path %s\n",filePathForOut);
+		printf("The actual data %s\n",compareMe);
 		
 	}
 
