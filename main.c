@@ -38,6 +38,10 @@ void takeInput();
 void printStats();
 
 
+/* Becuase I am doing all this shit by hand, I really dont need to worry about using system calls and shit because I can just WRITE directly to a .txt file :O
+ */
+
+
 /* Function that handles the functionality of the 'ls' command */
 void ls(){
   /* Going to handle the opening of the files */
@@ -88,11 +92,42 @@ void pwd(){
 /* Creates a process to run the command that the original process (soon to be parent) took the user's input for */
 int runCommand(char *compareMe, int len){
 	bool userCd = true;
-	int i;
+	bool fileOutRedir = false;
+	char *filePathForOut;
+
+	/* Checking to see if the user wants to redirect the file output by typing '>' */
+	for (i = 0; i < len; i++){
+		if (compareMe[i] == '>'){
+			fileOutRedir = true;
+			break;			
+		}
+	}
+
+	/* If the user wants to redir the file, we want to remove the  */
+	if (fileOutRedir){
+
+		char *token, *str, *tofree;
+
+		tofree = str = strdup(compareMe);  // We own str's memory now.
+		int count = 0;
+		while ((token = strsep(&str, ">"))){
+		       if (count == 1){
+				printf("%s\n",token);
+				filePathForOut = token;
+			}
+		       else {
+				compareMe = token;
+			}
+		       count++;
+		}
+		free(tofree);
+		printf("%s\n",filePathForOut);
+		
+	}
 
 	/* Checking to see if the user wants to cd before we make the child process */
 	char *cdCompare = "cd";
-	for (int i = 0; i < 2; i++){
+	for (i = 0; i < 2; i++){
 		if (compareMe[i] != cdCompare[i]){
 			userCd = false;
 			break;
