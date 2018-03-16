@@ -48,10 +48,6 @@ void ls(){
 
 	if (fileOutRedir){
 		fp = fopen(filePathForOut, "w");
-		
-		if (fp == NULL){ //need to handle this input || want to create a new file based on the
-			printf("here I need to have to make a new file or someathing \n");			
-		}
 	}
 
 	/* If we actually have someathing in the current dir to open */
@@ -80,7 +76,6 @@ void ls(){
 }
 
 /* Function that handles the 'echo' command */
-//TODO need to print to a file
 void echo(char *myMessage){
 	
 	if (fileOutRedir){
@@ -122,11 +117,24 @@ void sleepMe(char *findNumber){
 void pwd(){
 	/* Going to hold the actual info for the file path */
 	char temp[1000];
+
+	if (fileOutRedir){
+		fp = fopen(filePathForOut, "w");
+	}
    
 	/* Grabbing the current filepath -- if we  */
   	if (getcwd(temp, sizeof(temp)) != NULL){
-       		printf("%s", temp);
-   	}
+		if (fileOutRedir){
+			fprintf(fp, "%s", temp);
+		}
+		else {
+       			printf("%s", temp);
+   		}
+	}
+
+	if (fileOutRedir){
+		fclose(fp);
+	}
 }
 
 /* Function that removes spaces -- NEEDS testing */
@@ -189,6 +197,15 @@ int runCommand(char *compareMe, int len){
 		printf("\n\nthe file path \n%s\n",filePathForOut);
 		printf("The actual data \n%s\n\n",compareMe);
 		
+		fp = (fopen(filePathForOut, "w"));
+		
+		if (fp == NULL){
+			perror("");
+			fileOutRedir = false;
+		}
+		else {
+			fclose(fp);
+		}
 	}
 
 	/* Checking to see if the user wants to cd before we make the child process */
