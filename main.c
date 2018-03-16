@@ -82,6 +82,11 @@ void ls(){
 /* Function that handles the 'echo' command */
 //TODO need to print to a file
 void echo(char *myMessage){
+	
+	if (fileOutRedir){
+		fp = fopen(filePathForOut, "w");
+	}
+
 	for (int i = 5; i < strlen(myMessage); i++){
 		printf("%c",myMessage[i]);
 	}
