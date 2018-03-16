@@ -12,10 +12,8 @@
 #include <sys/stat.h>
 #include <setjmp.h>
 
-/* TO implement in the 'basic version'
- * pwd
- */
 
+//TODO need to write the actual data to a file
 
 pid_t pid = 1; 
 sigjmp_buf ctrlc_buf;	
@@ -25,8 +23,11 @@ bool bypass = false;
 char *userInput;
 char *compareMe;
 char *dateTime;
-size_t bufSize = 100;int i = 0;
-
+size_t bufSize = 100;
+int i = 0;
+bool fileOutRedir;
+char *filePathForOut;
+FILE *fp;
 
 void ls();
 void echo(char *);
@@ -38,34 +39,55 @@ void takeInput();
 void printStats();
 
 
-/* Becuase I am doing all this shit by hand, I really dont need to worry about using system calls and shit because I can just WRITE directly to a .txt file :O
- */
-
-
 /* Function that handles the functionality of the 'ls' command */
 void ls(){
-  /* Going to handle the opening of the files */
-  DIR *dirStream;
-  struct dirent *dir;
-  dirStream = opendir(".");
-  /* If we actually have someathing in the current dir to open */
-  if (dirStream) {
-    while ((dir = readdir(dirStream)) != NULL) {
-    	/* We dont want to show hidden files */ 
-	if (dir->d_name[0] != '.'){
-		 printf(" %s ", dir->d_name);
-    	}
-    }
-    closedir(dirStream);
-  }	
+	/* Going to handle the opening of the files */
+	DIR *dirStream;
+	struct dirent *dir;
+	dirStream = opendir(".");
+
+	if (fileOutRedir){
+		fp = fopen(filePathForOut, "w");
+		
+		if (fp == NULL){ //need to handle this input || want to create a new file based on the
+			printf("here I need to have to make a new file or someathing \n");			
+		}
+	}
+
+	/* If we actually have someathing in the current dir to open */
+	if (dirStream) {
+		while ((dir = readdir(dirStream)) != NULL) {
+    			/* We dont want to show hidden files */ 
+			if (dir->d_name[0] != '.'){
+
+				/* If the user wants to redirect the output to a file */		
+				if (fileOutRedir){
+					/* Need to figure out how to write the output to a file*/
+					fprintf(fp," %s ", dir->d_name);	
+				}
+				else {
+					printf(" %s ", dir->d_name);
+				}
+
+			}	
+    		}
+    		closedir(dirStream);
+  	}
+  
+	if (fileOutRedir){
+     		fclose(fp);
+  	}
 }
+
 /* Function that handles the 'echo' command */
+//TODO need to print to a file
 void echo(char *myMessage){
-	for (int i = 4; i < strlen(myMessage); i++){
+	for (int i = 5; i < strlen(myMessage); i++){
 		printf("%c",myMessage[i]);
 	}
 }
 
+/* Function that handels the 'sleep' command */
 void sleepMe(char *findNumber){
 	char *tempNum = (char*)malloc(strlen(findNumber) * sizeof(char));
 	double timeToSleep;
@@ -79,7 +101,9 @@ void sleepMe(char *findNumber){
 	sscanf(tempNum, "%lf",&timeToSleep);	
 	sleep(timeToSleep);
 }
+
 /* Funciton that handles the 'pwd' command */
+//TODO need to print to a file
 void pwd(){
 	/* Going to hold the actual info for the file path */
 	char temp[1000];
@@ -89,11 +113,25 @@ void pwd(){
        		printf("%s", temp);
    	}
 }
+
+/* Function that removes spaces -- NEEDS testing */
+void RemoveSpaces(char *source){
+	char *i = source;
+	char *j = source;
+
+	while (*j != 0){
+		*i = *j++;
+		if (*i != ' '){
+			i++;
+		}
+	}
+	*i = 0;
+}
+
 /* Creates a process to run the command that the original process (soon to be parent) took the user's input for */
 int runCommand(char *compareMe, int len){
 	bool userCd = true;
-	bool fileOutRedir = false;
-	char *filePathForOut;
+	fileOutRedir = false;
 
 	/* Checking to see if the user wants to redirect the file output by typing '>' */
 	for (i = 0; i < len; i++){
@@ -105,23 +143,36 @@ int runCommand(char *compareMe, int len){
 
 	/* If the user wants to redir the file, we want to remove the  */
 	if (fileOutRedir){
-
 		char *token, *str, *tofree;
 
 		tofree = str = strdup(compareMe);  // We own str's memory now.
 		int count = 0;
 		while ((token = strsep(&str, ">"))){
 		       if (count == 1){
-				filePathForOut = token;
-			}
+			       	printf("This should be the file path: %s\n",token);
+				/* Removing the spaces from the file path */
+				RemoveSpaces(token);
+				/* Allocating memory to the var and copying the filepath over to the global var */
+				filePathForOut = (char*)malloc(strlen(token) * sizeof(char));
+				strcpy(filePathForOut,token);	
+		       }
 		       else {
-			       strcpy(compareMe, token);		
+			       /* Clearing the mem from the compareMe string, and need to re-size it */
+			       free(compareMe);
+			       /* Needs to be strlen-1 because thats the lengh that the string would be if it were getting called like this */
+			       compareMe = (char*)malloc(strlen(token)-1 * sizeof(char)); 
+
+			       printf("\nThis should be the rest of the text: %s\n",token);
+			       strcpy(compareMe, token);
+	       		       compareMe[strlen(token)-1] = '\0';		       
 		       }
 		       count++;
 		}
+		//TODO at some point I could add funtionality to the up and down arrows, possibly by writing all the commands I am outputting to a file, then reading that file or someathing 
+		//then @ the end of the progrm I could close the file
 		free(tofree);
-		printf("the file path %s\n",filePathForOut);
-		printf("The actual data %s\n",compareMe);
+		printf("\n\nthe file path \n%s\n",filePathForOut);
+		printf("The actual data \n%s\n\n",compareMe);
 		
 	}
 
@@ -168,10 +219,9 @@ int runCommand(char *compareMe, int len){
 		} while(!WIFEXITED(status) && !WIFSIGNALED(status));
 		return 1;
 	}
-	else if (pid == 0){	
-		
+	else if (pid == 0){		
 		/* comparing what the user typed vs what we are looking for */
-		if (strcmp(compareMe, "ls") == 0){ //if the user wants to list the files in the dir
+		if (strcmp(compareMe, "ls") == 0){ //if the user wants to list the files in the dir	
 			ls();	
 		}
 		else if (strcmp(compareMe, "pwd") == 0){ //if the user inputted 'pwd'
@@ -220,7 +270,7 @@ int runCommand(char *compareMe, int len){
 	}		
 }
 
-/*   */
+/* Function to over-ride ^C input to make it act like the normal shell */
 void overrideCtrlC(){
 
 	signal(SIGINT, overrideCtrlC);
@@ -235,6 +285,7 @@ void overrideCtrlC(){
 	
 }
 
+/* Print time/date in the command line */
 void printStats(){
 	time_t rawtime;
   	struct tm * timeinfo;
@@ -247,8 +298,10 @@ void printStats(){
 
 	printf ("[%s]", dateTime );	
 	printf("# ");
+	free(dateTime);
 }
 
+/* Take input from the user, 'cleanes' up the input to call the 'runcommand' function */
 void takeInput(){		
 	userInput = (char *)malloc(bufSize * sizeof(char));
 
