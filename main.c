@@ -88,7 +88,17 @@ void echo(char *myMessage){
 	}
 
 	for (int i = 5; i < strlen(myMessage); i++){
-		printf("%c",myMessage[i]);
+
+		if (fileOutRedir){
+			fprintf(fp, "%c", myMessage[i]);
+		}
+		else {
+			printf("%c",myMessage[i]);
+		}	
+	}
+
+	if (fileOutRedir){
+		fclose(fp);
 	}
 }
 
