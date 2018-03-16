@@ -41,28 +41,32 @@ void printStats();
 
 /* Function that handles the functionality of the 'ls' command */
 void ls(){
-	/* Going to handle the opening of the files */
+	/* Going to handle how we open the Directory Stream */
 	DIR *dirStream;
-	struct dirent *dir;
+	/* Refers to a Directory Entry will be used to find the filename */	
+	struct dirent *dirEntry;
+	/* Ooening the current dir */
 	dirStream = opendir(".");
 
+	/* Checking to see if we are dealing with a file re-direct */
 	if (fileOutRedir){
 		fp = fopen(filePathForOut, "w");
 	}
 
 	/* If we actually have someathing in the current dir to open */
 	if (dirStream) {
-		while ((dir = readdir(dirStream)) != NULL) {
+		/* Reading the current entry from the directory -> saving it into our struct */
+		while ((dirEntry = readdir(dirStream)) != NULL) {
     			/* We dont want to show hidden files */ 
-			if (dir->d_name[0] != '.'){
+			if (dirEntry->d_name[0] != '.'){
 
-				/* If the user wants to redirect the output to a file */		
+				/* If the user wants to redirect the output to a file -> we use the d_name attribute of the struct to print the file name */		
 				if (fileOutRedir){
-					/* Need to figure out how to write the output to a file*/
-					fprintf(fp," %s ", dir->d_name);	
+					fprintf(fp," %s ", dirEntry->d_name);	
 				}
-				else {
-					printf(" %s ", dir->d_name);
+				/* Using the d_name attribute of the struct to print the file name */
+				else { 
+					printf(" %s ", dirEntry->d_name);
 				}
 
 			}	
@@ -75,15 +79,17 @@ void ls(){
   	}
 }
 
-/* Function that handles the 'echo' command */
+/* Function that handles the 'echo' command 
+ * char* = the message we want to print
+ * */
 void echo(char *myMessage){
 	
 	if (fileOutRedir){
 		fp = fopen(filePathForOut, "w");
 	}
 
+	/* Printing the file output */
 	for (int i = 5; i < strlen(myMessage); i++){
-
 		if (fileOutRedir){
 			fprintf(fp, "%c", myMessage[i]);
 		}
@@ -102,33 +108,34 @@ void sleepMe(char *findNumber){
 	char *tempNum = (char*)malloc(strlen(findNumber) * sizeof(char));
 	double timeToSleep;
 
+	/* Cleaning up the findNumber string that we end up getting */
 	int i = 6; // the index of the first decimal that we want	
 	for (int indexOfNum = 0; indexOfNum < strlen(findNumber);  indexOfNum++){
 		tempNum[indexOfNum] = findNumber[i];
 		i++;
 	}
-
+	
+	/* Converting the char* to a double */
 	sscanf(tempNum, "%lf",&timeToSleep);	
 	sleep(timeToSleep);
 }
 
 /* Funciton that handles the 'pwd' command */
-//TODO need to print to a file
 void pwd(){
-	/* Going to hold the actual info for the file path */
-	char temp[1000];
+	/* Going to hold the current dir path*/
+	char tempPath[1000];
 
 	if (fileOutRedir){
 		fp = fopen(filePathForOut, "w");
 	}
    
-	/* Grabbing the current filepath -- if we  */
-  	if (getcwd(temp, sizeof(temp)) != NULL){
+	/* Grabbing the current filepath */
+  	if (getcwd(tempPath, sizeof(tempPath)) != NULL){
 		if (fileOutRedir){
-			fprintf(fp, "%s", temp);
+			fprintf(fp, "%s", tempPath);
 		}
 		else {
-       			printf("%s", temp);
+       			printf("%s", tempPath);
    		}
 	}
 
@@ -137,25 +144,34 @@ void pwd(){
 	}
 }
 
-/* Function that removes spaces -- NEEDS testing */
-void RemoveSpaces(char *source){
-	char *i = source;
-	char *j = source;
+/* Function that removes spaces */
+void removeSpaces(char *formatMe){
+	/* Based on the copy, going to loop though and remove the spaces in the inputted char* */
+	char *spaceRemover = formatMe;
+	/* Going to be used as an incrementor for the spaceRemoveer var */
+	char *formatMeCopy = formatMe;
 
-	while (*j != 0){
-		*i = *j++;
-		if (*i != ' '){
-			i++;
+	while (*formatMeCopy != 0){
+		/* Assigning the spaceRemover string to equal the char referenced by formatMeCopy */
+		*spaceRemover = *formatMeCopy++;
+
+		/* If the current char referenced is NOT a ' ' char, we will allow the spaceRemover to increment to the next char, otherwise it will get over-wrote in the next iteration of the loop */
+		if (*spaceRemover != ' '){
+			spaceRemover++;
 		}
 	}
-	*i = 0;
+	/* Clears the string */
+	*spaceRemover = 0;
 }
 
 /* Creates a process to run the command that the original process (soon to be parent) took the user's input for */
 int runCommand(char *compareMe, int len){
+	/* Initial vars to check for output redirect and cd -- since those are more easily done by the parent process */
 	bool userCd = true;
 	fileOutRedir = false;
 
+
+	/* START to check for the output redirect '>' char */
 	/* Checking to see if the user wants to redirect the file output by typing '>' */
 	for (i = 0; i < len; i++){
 		if (compareMe[i] == '>'){
@@ -164,39 +180,41 @@ int runCommand(char *compareMe, int len){
 		}
 	}
 
-	/* If the user wants to redir the file, we want to remove the  */
+	/* If the user wants to redirect the file output, we need to split the string in terms of the '>' char  */
 	if (fileOutRedir){
-		char *token, *str, *tofree;
-
+		/* Creating temp vars -- so we can split the string */
+		char *strChunk, *str, *tofree;
 		tofree = str = strdup(compareMe);  // We own str's memory now.
+		/* Used to determeine if we are looking at the XXX > or YYY part of the string */
 		int count = 0;
-		while ((token = strsep(&str, ">"))){
-		       if (count == 1){
-			       	printf("This should be the file path: %s\n",token);
+
+		while ((strChunk = strsep(&str, ">"))){     
+			/* If we are looking at the filPath portion of the split string (or the YYY section defined above) */
+			if (count == 1){
 				/* Removing the spaces from the file path */
-				RemoveSpaces(token);
+				removeSpaces(strChunk);
 				/* Allocating memory to the var and copying the filepath over to the global var */
-				filePathForOut = (char*)malloc(strlen(token) * sizeof(char));
-				strcpy(filePathForOut,token);	
-		       }
-		       else {
+				filePathForOut = (char*)malloc(strlen(strChunk) * sizeof(char));
+				strcpy(filePathForOut,strChunk);	
+		       	}
+			/* If we are looking at the command portion of the split string (or the XXX section defined above) */
+		      	else {
 			       /* Clearing the mem from the compareMe string, and need to re-size it */
 			       free(compareMe);
 			       /* Needs to be strlen-1 because thats the lengh that the string would be if it were getting called like this */
-			       compareMe = (char*)malloc(strlen(token)-1 * sizeof(char)); 
+			       compareMe = (char*)malloc(strlen(strChunk)-1 * sizeof(char)); 
 
-			       printf("\nThis should be the rest of the text: %s\n",token);
-			       strcpy(compareMe, token);
-	       		       compareMe[strlen(token)-1] = '\0';		       
+			       strcpy(compareMe, strChunk);
+
+			       /* Adding the termination character, otherwise everything breaks */
+	       		       compareMe[strlen(strChunk)-1] = '\0';		       
 		       }
 		       count++;
 		}
-		//TODO at some point I could add funtionality to the up and down arrows, possibly by writing all the commands I am outputting to a file, then reading that file or someathing 
-		//then @ the end of the progrm I could close the file
+		bypass = true;
 		free(tofree);
-		printf("\n\nthe file path \n%s\n",filePathForOut);
-		printf("The actual data \n%s\n\n",compareMe);
-		
+
+		/* Checking the filePath */
 		fp = (fopen(filePathForOut, "w"));
 		
 		if (fp == NULL){
@@ -207,7 +225,9 @@ int runCommand(char *compareMe, int len){
 			fclose(fp);
 		}
 	}
+	/* END file output redirect check */
 
+	/* START to check for CD input */
 	/* Checking to see if the user wants to cd before we make the child process */
 	char *cdCompare = "cd";
 	for (i = 0; i < 2; i++){
@@ -218,11 +238,10 @@ int runCommand(char *compareMe, int len){
 	}
 
 	if (userCd){
-		//todo need to figure out why this is not wokring --  probs has 
-		/* For some reason this works, but doing the exact same with the manual copy breaks */
+		/* Going to hold the dir we want to change to */
 		char *dirToChangeTo = (char*)malloc(len-2 * sizeof(char));
 
-
+		/* Just copying over the dir we want to change to, by starting on the 3rd char in the inputted string */
 		int startIndex = 0;
 		
 		for (i = 3; i <= len; i++){
@@ -232,34 +251,46 @@ int runCommand(char *compareMe, int len){
 
 		dirToChangeTo[len-2] = '\0';
 		
+		/* If chdir has any problems, we tell the user */
 		if (chdir(dirToChangeTo) != 0){
 			fprintf(stderr,"cd: %s: ",dirToChangeTo);
 			perror("");
 		}
 
+		/* Freeing mem + fixing newline output */
 		bypass = true;
+		free(dirToChangeTo);
 		return 0;
 	}
+	/* END check for CD input */
 
+	/* Looking at the normal cases (if the user does not want to cd()) */
 	pid = fork();
 	pid_t waitPid;
 	pid_t status;
 
+	/* If we are looking at the parent process, we have it wait until its child has finished */
 	if (pid > 0){
 		do{
 			waitPid = waitpid(pid, &status, WUNTRACED);
 		} while(!WIFEXITED(status) && !WIFSIGNALED(status));
 		return 1;
 	}
-	else if (pid == 0){		
-		/* comparing what the user typed vs what we are looking for */
-		if (strcmp(compareMe, "ls") == 0){ //if the user wants to list the files in the dir	
+	/* If we are looking at the child process */
+	else if (pid == 0){
+		/* checking userinput */
+
+		/* Checking the ls case, this is why we needed to clean up the inputted string */
+		if (strcmp(compareMe, "ls") == 0){ 
 			ls();	
 		}
-		else if (strcmp(compareMe, "pwd") == 0){ //if the user inputted 'pwd'
+		/* Checking the 'pwd' case */
+		else if (strcmp(compareMe, "pwd") == 0){
 			pwd();
 		}
-		else if (len > 2){ //we know at this point it could either be echo or sleep (because they both contain stuff after
+		/* Now checking to see if the user wants to 'echo' or 'sleep' */
+		else if (len > 2){
+
 			/* Simple compare arrays  */
 			char *echoCompare = "echo";
 			char *sleepCompare = "sleep";
@@ -278,12 +309,11 @@ int runCommand(char *compareMe, int len){
 				for (i = 0; i < 5; i++){
 					if(compareMe[i] != sleepCompare[i]){
 						isSleep = false;
+						break;
 					}
 				}
 			}
-
-
-			else { // we need to rememeber to reset the isSleep
+			else {
 				isSleep = false;
 				echo(compareMe);
 			}
@@ -292,6 +322,7 @@ int runCommand(char *compareMe, int len){
 				sleepMe(compareMe);	
 			}
 		}
+		/* Once the child process has finished the process */
 		exit(0);	
 		return 0;
 	}
@@ -307,9 +338,11 @@ void overrideCtrlC(){
 
 	signal(SIGINT, overrideCtrlC);
 	
+	/* If we are looking at a child process -- we want to end it */
 	if (pid == 0){
 		exit(0);
 	}
+	/* If we are looking at the parent process, we want to print a newline and jump 'back' in the takeInput function so the user can input commands again */
 	else {
 		printf("\n");
 		siglongjmp(ctrlc_buf, 1);
@@ -337,14 +370,14 @@ void printStats(){
 void takeInput(){		
 	userInput = (char *)malloc(bufSize * sizeof(char));
 
-	while (true){
-		
+	while (true){	
 		while (sigsetjmp(ctrlc_buf, 1) != 0 );
 		bypass = false;
 
 		printStats();
 		getline(&userInput,&bufSize,stdin);
-		
+	
+		/* If the user enteres ^D input */	
 		if (feof(stdin)){
 			fflush(stdout);
 			printf("^D\n");
@@ -352,17 +385,15 @@ void takeInput(){
 		}
 
 		/* Allocating the correct amount of mem to the compare array */
-		int len = strlen(userInput) - 2; //for some reason the strlen doesnt actually get the correct num chars -- idk why
+		int len = strlen(userInput) - 2; 
 		if (len > 0){
 			compareMe = (char*)malloc(len * sizeof(char));
 
-			/* TODO need to figure oiut  */
 			for (i = 0; i <= len; i++){
 				compareMe[i] = userInput[i];
 			}
+			
 			compareMe[i] = userInput[i];
-
-			/* Somehow this is OK -- I have no idea why  */
 			compareMe[i]= '\0';
 		
 			runningProcess = true;
