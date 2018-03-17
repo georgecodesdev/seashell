@@ -1,5 +1,12 @@
 #include "header.h"
 
+pid_t pid;
+sigjmp_buf ctrlc_buf;	
+int i;
+bool runningProcess, bypass, fileOutRedir;
+char *userInput, *filePathForOut, *compareMe;
+FILE *fp;
+
 /* Function that removes spaces */
 void removeSpaces(char *formatMe){
 	/* Based on the copy, going to loop though and remove the spaces in the inputted char* */
@@ -25,7 +32,8 @@ int runCommand(char *compareMe, int len){
 	/* Initial vars to check for output redirect and cd -- since those are more easily done by the parent process */
 	bool userCd = true;
 	fileOutRedir = false;
-
+	i = 0;
+	bypass = false;
 
 	/* START to check for the output redirect '>' char */
 	/* Checking to see if the user wants to redirect the file output by typing '>' */
@@ -43,7 +51,7 @@ int runCommand(char *compareMe, int len){
 		tofree = str = strdup(compareMe);  // We own str's memory now.
 		/* Used to determeine if we are looking at the XXX > or YYY part of the string */
 		int count = 0;
-
+		
 		while ((strChunk = strsep(&str, ">"))){     
 			/* If we are looking at the filPath portion of the split string (or the YYY section defined above) */
 			if (count == 1){
@@ -71,7 +79,7 @@ int runCommand(char *compareMe, int len){
 		free(tofree);
 
 		/* Checking the filePath */
-		fp = (fopen(filePathForOut, "w"));
+		FILE *fp = (fopen(filePathForOut, "w"));
 		
 		if (fp == NULL){
 			perror("");
@@ -191,13 +199,14 @@ int runCommand(char *compareMe, int len){
 
 /* Take input from the user, 'cleanes' up the input to call the 'runcommand' function */
 void takeInput(){		
+	size_t bufSize = 100;
 	userInput = (char *)malloc(bufSize * sizeof(char));
-
 	while (true){	
 		while (sigsetjmp(ctrlc_buf, 1) != 0 );
 		bypass = false;
 
 		printStats();
+
 		getline(&userInput,&bufSize,stdin);
 	
 		/* If the user enteres ^D input */	
@@ -206,7 +215,7 @@ void takeInput(){
 			printf("^D\n");
 			exit(0);
 		}
-
+ 
 		/* Allocating the correct amount of mem to the compare array */
 		int len = strlen(userInput) - 2; 
 		if (len > 0){
@@ -233,6 +242,6 @@ void takeInput(){
 }
 
 int main(){
-	signal(SIGINT, overrideCtrlC);
+	signal(SIGINT, overrideCtrlC);	
 	takeInput();
 }

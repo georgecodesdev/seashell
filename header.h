@@ -11,20 +11,21 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <setjmp.h>
+#include <ctype.h>
 
-pid_t pid = 1; 
-sigjmp_buf ctrlc_buf;	
+extern pid_t pid; 
+extern sigjmp_buf ctrlc_buf;	
 
-bool runningProcess = false;
-bool bypass = false;
-char *userInput;
-char *compareMe;
-char *dateTime;
-size_t bufSize = 100;
-int i = 0;
-bool fileOutRedir;
-char *filePathForOut;
-FILE *fp;
+extern bool runningProcess;
+extern bool bypass;
+extern char *userInput;
+extern char *compareMe;
+extern char *dateTime;
+extern size_t bufSize;
+extern int i;
+extern bool fileOutRedir;
+extern char *filePathForOut;
+extern FILE *fp;
 
 void ls();
 void echo(char *);
@@ -34,3 +35,5 @@ int runCommand(char *, int);
 void overrideCtrlC();
 void takeInput();
 void printStats();
+void removeSpaces(char *);
+int main();

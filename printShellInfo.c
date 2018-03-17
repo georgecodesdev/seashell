@@ -5,7 +5,7 @@ void printStats(){
 	time_t rawtime;
   	struct tm * timeinfo;
 
-	dateTime = (char *)malloc(40 * sizeof(char));
+	char *dateTime = (char *)malloc(40 * sizeof(char));
 
 	time ( &rawtime );
   	timeinfo = localtime ( &rawtime );
